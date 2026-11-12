@@ -12,7 +12,7 @@ evaluationDependsOn(':common')
 sourceSets.main.java.srcDir rootProject.file('common/src/main/java')
 sourceSets.main.resources.srcDir rootProject.file('common/src/main/resources')
 
-// NeoForge gametests (mock players), separate from the jar.
+// NeoForge client test driver (a real singleplayer world), separate from the jar.
 sourceSets {
 	gametest {
 		compileClasspath += sourceSets.main.compileClasspath + sourceSets.main.output
@@ -26,11 +26,13 @@ neoForge {
 	runs {
 		client { client() }
 		server { server(); programArgument '--nogui' }
-		gameTestServer {
-			type = 'gameTestServer'
+		clientTest {
+			client()
 			sourceSet = sourceSets.gametest
-			gameDirectory = rootProject.file('build/run/neoforgeGameTest')
-			systemProperty 'neoforge.enabledGameTestNamespaces', 'omnivault_trinkets_compat_test'
+			gameDirectory = rootProject.file('build/run/neoforgeClientTest')
+			systemProperty 'omnivault_trinkets_compat.client_test', 'true'
+			systemProperty 'omnivault_trinkets_compat.screenshots', rootProject.file('build/run/neoforgeClientTest/screenshots').absolutePath
+			systemProperty 'omnivault_trinkets_compat.test_result', rootProject.file('build/neoforge-client-result.json').absolutePath
 		}
 	}
 }
@@ -92,3 +94,19 @@ modrinth {
 }
 tasks.named('modrinth') { notCompatibleWithConfigurationCache('Minotaur uses Task.project') }
 tasks.named('modrinthSyncBody') { notCompatibleWithConfigurationCache('Minotaur uses Task.project') }
+
+// The client test quits the game when done; fail the task unless it wrote a passing result.
+def neoClientRunDirectory = rootProject.file('build/run/neoforgeClientTest')
+def neoClientResult = rootProject.file('build/neoforge-client-result.json')
+tasks.named('runClientTest') {
+	doFirst {
+		neoClientResult.delete()
+		neoClientRunDirectory.mkdirs()
+		new File(neoClientRunDirectory, 'options.txt').text = 'soundCategory_master:0.0\nonboardAccessibility:false\n'
+	}
+	doLast {
+		if (!neoClientResult.exists() || !neoClientResult.text.contains('"passed":true')) {
+			throw new GradleException('NeoForge client test failed: ' + (neoClientResult.exists() ? neoClientResult.text : 'no result written'))
+		}
+	}
+}

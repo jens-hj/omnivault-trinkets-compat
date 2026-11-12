@@ -19,4 +19,4 @@ tasks.named('build') { dependsOn ':common:build', ':fabric:build', ':neoforge:bu
 tasks.register('modrinth') { dependsOn ':fabric:modrinth', ':neoforge:modrinth' }
 tasks.register('modrinthSyncBody') { dependsOn ':fabric:modrinthSyncBody' }
 tasks.register('runClientGameTest') { dependsOn ':fabric:runClientGameTest' }
-tasks.register('runGameTestServer') { dependsOn ':neoforge:runGameTestServer' }
+tasks.register('runNeoForgeClientTest') { dependsOn ':neoforge:runClientTest' }

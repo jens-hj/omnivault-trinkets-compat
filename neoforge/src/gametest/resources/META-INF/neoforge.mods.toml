@@ -1,0 +1,12 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="MIT"
+[[mods]]
+modId="omnivault_trinkets_compat_test"
+version="1.0"
+[[dependencies.omnivault_trinkets_compat_test]]
+modId="omnivault_trinkets_compat"
+type="required"
+versionRange="*"
+ordering="AFTER"
+side="BOTH"
