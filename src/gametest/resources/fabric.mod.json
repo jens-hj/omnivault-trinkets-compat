@@ -1,0 +1,15 @@
+{
+	"schemaVersion": 1,
+	"id": "omnivault_trinkets_compat_test",
+	"version": "${version}",
+	"name": "OmniVault Trinkets Compat Tests",
+	"environment": "*",
+	"entrypoints": {
+		"fabric-client-gametest": [
+			"dev.jensh.omnivaulttrinkets.test.BackSlotClientGameTest"
+		]
+	},
+	"depends": {
+		"omnivault_trinkets_compat": "*"
+	}
+}
