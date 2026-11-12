@@ -42,3 +42,4 @@ replay_*.log
 # nix
 result
 .direnv/
+__pycache__/
