@@ -92,6 +92,7 @@ modrinth {
 	dependencies {
 		required.project "trinkets-updated"
 		required.project "omnivault"
+		required.project "fabric-api"
 	}
 }
 
