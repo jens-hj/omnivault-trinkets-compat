@@ -93,7 +93,8 @@ modrinth {
 	}
 }
 tasks.named('modrinth') { notCompatibleWithConfigurationCache('Minotaur uses Task.project') }
-tasks.named('modrinthSyncBody') { notCompatibleWithConfigurationCache('Minotaur uses Task.project') }
+// The page body is shared and synced by the fabric module.
+tasks.named('modrinthSyncBody') { enabled = false }
 
 // The client test quits the game when done; fail the task unless it wrote a passing result.
 def neoClientRunDirectory = rootProject.file('build/run/neoforgeClientTest')
