@@ -26,6 +26,10 @@ nix develop
 ./gradlew runClientGameTest   # wears a backpack in the back slot, checks key/pickup/tick, screenshots it
 ./gradlew build
 python3 scripts/gen_icon.py src/main/resources/assets/omnivault_trinkets_compat/icon.png
+
+# Modrinth page art: gallery shots, then docs/page/ (banner, headers, tier GIF, GUI shots)
+OVT_GALLERY=1 ./gradlew runClientGameTest
+python3 scripts/gen_page_art.py
 ```
 
 ## License
