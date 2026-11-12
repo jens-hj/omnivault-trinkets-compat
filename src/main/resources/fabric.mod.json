@@ -1,0 +1,28 @@
+{
+	"schemaVersion": 1,
+	"id": "omnivault_trinkets_compat",
+	"version": "${version}",
+	"name": "OmniVault Trinkets Compat",
+	"description": "Wear OmniVault backpacks in the Trinkets back slot: they show on your back, open with the backpack key and keep their upgrades running.",
+	"authors": ["jens-hj"],
+	"contact": {
+		"homepage": "https://modrinth.com/mod/omnivault-trinkets-compat",
+		"sources": "https://github.com/jens-hj/omnivault-trinkets-compat",
+		"issues": "https://github.com/jens-hj/omnivault-trinkets-compat/issues"
+	},
+	"license": "MIT",
+	"icon": "assets/omnivault_trinkets_compat/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": ["dev.jensh.omnivaulttrinkets.OmniVaultTrinkets"],
+		"client": ["dev.jensh.omnivaulttrinkets.client.OmniVaultTrinketsClient"]
+	},
+	"mixins": ["omnivault_trinkets_compat.mixins.json"],
+	"depends": {
+		"fabricloader": ">=0.20.1",
+		"minecraft": "~26.3",
+		"fabric-api": "*",
+		"trinkets_updated": "*",
+		"omnivault": ">=2.0.4"
+	}
+}

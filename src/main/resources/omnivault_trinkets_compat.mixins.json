@@ -1,0 +1,12 @@
+{
+	"required": true,
+	"package": "dev.jensh.omnivaulttrinkets.mixin",
+	"compatibilityLevel": "JAVA_25",
+	"mixins": ["BackpacksMixin", "BackpackSourceHeldMixin", "BackpackUpgradesMixin"],
+	"injectors": {
+		"defaultRequire": 1
+	},
+	"overwrites": {
+		"requireAnnotations": true
+	}
+}
