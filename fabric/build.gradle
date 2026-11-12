@@ -1,0 +1,104 @@
+plugins {
+	id 'net.fabricmc.fabric-loom' version "${loom_version}"
+	id 'com.modrinth.minotaur' version "${minotaur_version}"
+}
+
+base {
+	archivesName = 'omnivault-trinkets-compat'
+}
+
+// Common code is compiled into this jar; build output lives in the root build dir (gallery shots, run dirs).
+layout.buildDirectory = rootProject.layout.buildDirectory
+evaluationDependsOn(':common')
+sourceSets.main.java.srcDir rootProject.file('common/src/main/java')
+sourceSets.main.resources.srcDir rootProject.file('common/src/main/resources')
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+	implementation "maven.modrinth:trinkets-updated:${project.trinkets_version}"
+	implementation "maven.modrinth:omnivault:${project.omnivault_fabric_version}"
+}
+
+fabricApi {
+	configureTests {
+		createSourceSet = true
+		modId = "omnivault_trinkets_compat_test"
+		enableGameTests = false
+		enableClientGameTests = true
+		eula = true // By setting this to true, you agree to the Minecraft EULA.
+	}
+}
+
+processResources {
+	def version = project.version
+	inputs.property "version", version
+
+	filesMatching("fabric.mod.json") {
+		expand "version": version
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 25
+}
+
+java {
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
+}
+
+jar {
+	def projectName = rootProject.name
+	inputs.property "projectName", projectName
+
+	archiveClassifier = 'fabric'
+	from(rootProject.file("LICENSE")) {
+		rename { "${it}_$projectName" }
+	}
+}
+
+def modrinthToken = providers.environmentVariable("MODRINTH_TOKEN").orElse(
+		providers.fileContents(layout.projectDirectory.file(
+				"${System.getProperty('user.home')}/.config/modrinth-token")).asText.map { it.trim() })
+
+// The changelog section for the current version
+def currentChangelog = providers.fileContents(rootProject.layout.projectDirectory.file("CHANGELOG.md")).asText.map { text ->
+	def section = text.split(/(?m)^## /).find { it.startsWith("${version}\n") || it.startsWith("${version}\r\n") }
+	section ? section.substring(section.indexOf('\n') + 1).trim() : ""
+}
+
+modrinth {
+	token = modrinthToken
+	debugMode = providers.gradleProperty("modrinthDryRun").isPresent()
+	projectId = "omnivault-trinkets-compat"
+	versionNumber = "${project.version}+fabric"
+	versionName = "${project.version} (Fabric)"
+	versionType = "release"
+	uploadFile = jar
+	gameVersions = [project.minecraft_version]
+	loaders = ["fabric"]
+	changelog = currentChangelog
+	syncBodyFrom = providers.fileContents(rootProject.layout.projectDirectory.file("docs/MODRINTH.md")).asText
+	dependencies {
+		required.project "trinkets-updated"
+		required.project "omnivault"
+		required.project "fabric-api"
+	}
+}
+
+tasks.named("modrinth") { notCompatibleWithConfigurationCache("Minotaur uses Task.project") }
+tasks.named("modrinthSyncBody") { notCompatibleWithConfigurationCache("Minotaur uses Task.project") }
+
+// Mute the game during client gametests.
+def gameTestOptions = layout.buildDirectory.file("run/clientGameTest/options.txt")
+tasks.named("runClientGameTest") {
+	doFirst {
+		def options = gameTestOptions.get().asFile
+		options.parentFile.mkdirs()
+		def lines = options.exists() ? options.readLines().findAll { !it.startsWith("soundCategory_master:") } : []
+		options.text = (lines + "soundCategory_master:0.0").join("\n") + "\n"
+	}
+}

@@ -4,9 +4,12 @@ pluginManagement {
 			name = 'Fabric'
 			url = 'https://maven.fabricmc.net/'
 		}
+		maven { url = 'https://maven.neoforged.net/releases' }
 		mavenCentral()
 		gradlePluginPortal()
 	}
 }
 
 rootProject.name = 'omnivault-trinkets-compat'
+
+include 'common', 'fabric', 'neoforge'

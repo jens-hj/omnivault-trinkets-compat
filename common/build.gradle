@@ -1,0 +1,19 @@
+plugins {
+	id 'java-library'
+	id 'net.neoforged.moddev' version "${moddev_version}"
+}
+
+// Loader-neutral code: vanilla Minecraft, OmniVault's common classes, the Trinkets API (same on both loaders).
+neoForge { neoFormVersion = project.neoform_version }
+java { toolchain.languageVersion = JavaLanguageVersion.of(25) }
+
+dependencies {
+	compileOnly 'net.fabricmc:sponge-mixin:0.17.5+mixin.0.8.7'
+	compileOnly 'io.github.llamalad7:mixinextras-common:0.5.5'
+	compileOnly "maven.modrinth:omnivault:${project.omnivault_fabric_version}"
+	compileOnly "maven.modrinth:trinkets-updated:${project.trinkets_version}"
+}
+
+tasks.matching { it.name == 'downloadAssets' }.configureEach {
+	javaExecutable = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(25) }.map { it.executablePath.asFile.absolutePath }
+}

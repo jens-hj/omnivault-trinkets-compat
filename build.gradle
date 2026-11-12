@@ -1,111 +1,22 @@
-plugins {
-	id 'net.fabricmc.fabric-loom' version "${loom_version}"
-	id 'com.modrinth.minotaur' version "${minotaur_version}"
-}
+plugins { id 'base' }
 
-base {
-	archivesName = 'omnivault-trinkets-compat'
-}
-
-repositories {
-	exclusiveContent {
-		forRepository {
-			maven {
-				name = 'Modrinth'
-				url = 'https://api.modrinth.com/maven'
-			}
-		}
-		filter {
-			includeGroup 'maven.modrinth'
+allprojects {
+	group = rootProject.property('group')
+	version = rootProject.property('version')
+	repositories {
+		mavenCentral()
+		maven { url = 'https://maven.fabricmc.net/' }
+		maven { url = 'https://maven.neoforged.net/releases' }
+		exclusiveContent {
+			forRepository { maven { name = 'Modrinth'; url = 'https://api.modrinth.com/maven' } }
+			filter { includeGroup 'maven.modrinth' }
 		}
 	}
 }
 
-dependencies {
-	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
-	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
-
-	implementation "maven.modrinth:trinkets-updated:${project.trinkets_version}"
-	implementation "maven.modrinth:omnivault:${project.omnivault_version}"
-}
-
-fabricApi {
-	configureTests {
-		createSourceSet = true
-		modId = "omnivault_trinkets_compat_test"
-		enableGameTests = false
-		enableClientGameTests = true
-		eula = true // By setting this to true, you agree to the Minecraft EULA.
-	}
-}
-
-processResources {
-	def version = project.version
-	inputs.property "version", version
-
-	filesMatching("fabric.mod.json") {
-		expand "version": version
-	}
-}
-
-tasks.withType(JavaCompile).configureEach {
-	it.options.release = 25
-}
-
-java {
-	sourceCompatibility = JavaVersion.VERSION_25
-	targetCompatibility = JavaVersion.VERSION_25
-}
-
-jar {
-	def projectName = project.name
-	inputs.property "projectName", projectName
-
-	from("LICENSE") {
-		rename { "${it}_$projectName" }
-	}
-}
-
-def modrinthToken = providers.environmentVariable("MODRINTH_TOKEN").orElse(
-		providers.fileContents(layout.projectDirectory.file(
-				"${System.getProperty('user.home')}/.config/modrinth-token")).asText.map { it.trim() })
-
-// The changelog section for the current version
-def currentChangelog = providers.fileContents(layout.projectDirectory.file("CHANGELOG.md")).asText.map { text ->
-	def section = text.split(/(?m)^## /).find { it.startsWith("${version}\n") || it.startsWith("${version}\r\n") }
-	section ? section.substring(section.indexOf('\n') + 1).trim() : ""
-}
-
-modrinth {
-	token = modrinthToken
-	debugMode = providers.gradleProperty("modrinthDryRun").isPresent()
-	projectId = "omnivault-trinkets-compat"
-	versionNumber = project.version
-	versionName = "${project.version}"
-	versionType = "release"
-	uploadFile = jar
-	gameVersions = [project.minecraft_version]
-	loaders = ["fabric"]
-	changelog = currentChangelog
-	syncBodyFrom = providers.fileContents(layout.projectDirectory.file("docs/MODRINTH.md")).asText
-	dependencies {
-		required.project "trinkets-updated"
-		required.project "omnivault"
-		required.project "fabric-api"
-	}
-}
-
-tasks.named("modrinth") { notCompatibleWithConfigurationCache("Minotaur uses Task.project") }
-tasks.named("modrinthSyncBody") { notCompatibleWithConfigurationCache("Minotaur uses Task.project") }
-
-// Mute the game during client gametests.
-def gameTestOptions = layout.buildDirectory.file("run/clientGameTest/options.txt")
-tasks.named("runClientGameTest") {
-	doFirst {
-		def options = gameTestOptions.get().asFile
-		options.parentFile.mkdirs()
-		def lines = options.exists() ? options.readLines().findAll { !it.startsWith("soundCategory_master:") } : []
-		options.text = (lines + "soundCategory_master:0.0").join("\n") + "\n"
-	}
-}
+tasks.named('build') { dependsOn ':common:build', ':fabric:build', ':neoforge:build' }
+// Both loaders' versions go up together; the page body is shared.
+tasks.register('modrinth') { dependsOn ':fabric:modrinth', ':neoforge:modrinth' }
+tasks.register('modrinthSyncBody') { dependsOn ':fabric:modrinthSyncBody' }
+tasks.register('runClientGameTest') { dependsOn ':fabric:runClientGameTest' }
+tasks.register('runGameTestServer') { dependsOn ':neoforge:runGameTestServer' }

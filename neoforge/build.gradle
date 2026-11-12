@@ -1,0 +1,94 @@
+plugins {
+	id 'java-library'
+	id 'net.neoforged.moddev' version "${moddev_version}"
+	id 'com.modrinth.minotaur' version "${minotaur_version}"
+}
+
+base { archivesName = 'omnivault-trinkets-compat' }
+java { toolchain.languageVersion = JavaLanguageVersion.of(25) }
+
+// Common code and resources are compiled into this jar.
+evaluationDependsOn(':common')
+sourceSets.main.java.srcDir rootProject.file('common/src/main/java')
+sourceSets.main.resources.srcDir rootProject.file('common/src/main/resources')
+
+// NeoForge gametests (mock players), separate from the jar.
+sourceSets {
+	gametest {
+		compileClasspath += sourceSets.main.compileClasspath + sourceSets.main.output
+		runtimeClasspath += sourceSets.main.runtimeClasspath + sourceSets.main.output
+	}
+}
+
+neoForge {
+	version = project.neoforge_version
+	mods { omnivault_trinkets_compat { sourceSet sourceSets.main } }
+	runs {
+		client { client() }
+		server { server(); programArgument '--nogui' }
+		gameTestServer {
+			type = 'gameTestServer'
+			sourceSet = sourceSets.gametest
+			gameDirectory = rootProject.file('build/run/neoforgeGameTest')
+			systemProperty 'neoforge.enabledGameTestNamespaces', 'omnivault_trinkets_compat_test'
+		}
+	}
+}
+
+neoForge { mods { omnivault_trinkets_compat_test { sourceSet sourceSets.gametest } } }
+
+dependencies {
+	implementation "maven.modrinth:omnivault:${project.omnivault_neoforge_version}"
+	// Both accessory mods are optional; -PnoCurios / -PnoTrinkets leave one out of the dev runs.
+	compileOnly "maven.modrinth:curios:${project.curios_version}"
+	compileOnly "maven.modrinth:trinkets-updated:${project.trinkets_version}"
+	if (!providers.gradleProperty('noCurios').isPresent()) {
+		runtimeOnly "maven.modrinth:curios:${project.curios_version}"
+	}
+	if (!providers.gradleProperty('noTrinkets').isPresent()) {
+		runtimeOnly "maven.modrinth:trinkets-updated:${project.trinkets_version}"
+	}
+	gametestCompileOnly "maven.modrinth:curios:${project.curios_version}"
+	gametestCompileOnly "maven.modrinth:trinkets-updated:${project.trinkets_version}"
+}
+
+def releaseVersion = project.version.toString()
+processResources {
+	inputs.property 'version', releaseVersion
+	filesMatching('META-INF/neoforge.mods.toml') { expand version: releaseVersion }
+}
+tasks.named('jar') {
+	archiveClassifier = 'neoforge'
+	def projectName = rootProject.name
+	from(rootProject.file('LICENSE')) { rename { "${it}_$projectName" } }
+}
+tasks.matching { it.name == 'downloadAssets' }.configureEach {
+	javaExecutable = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(25) }.map { it.executablePath.asFile.absolutePath }
+}
+
+def modrinthToken = providers.environmentVariable('MODRINTH_TOKEN').orElse(
+		providers.fileContents(rootProject.layout.projectDirectory.file(
+				"${System.getProperty('user.home')}/.config/modrinth-token")).asText.map { it.trim() })
+def currentChangelog = providers.fileContents(rootProject.layout.projectDirectory.file('CHANGELOG.md')).asText.map { text ->
+	def section = text.split(/(?m)^## /).find { it.startsWith("${version}\n") || it.startsWith("${version}\r\n") }
+	section ? section.substring(section.indexOf('\n') + 1).trim() : ''
+}
+modrinth {
+	token = modrinthToken
+	debugMode = providers.gradleProperty('modrinthDryRun').isPresent()
+	projectId = 'omnivault-trinkets-compat'
+	versionNumber = "${project.version}+neoforge"
+	versionName = "${project.version} (NeoForge)"
+	versionType = 'release'
+	uploadFile = jar
+	gameVersions = [project.minecraft_version]
+	loaders = ['neoforge']
+	changelog = currentChangelog
+	dependencies {
+		required.project 'omnivault'
+		optional.project 'curios'
+		optional.project 'trinkets-updated'
+	}
+}
+tasks.named('modrinth') { notCompatibleWithConfigurationCache('Minotaur uses Task.project') }
+tasks.named('modrinthSyncBody') { notCompatibleWithConfigurationCache('Minotaur uses Task.project') }
