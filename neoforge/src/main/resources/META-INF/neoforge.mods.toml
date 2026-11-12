@@ -9,7 +9,7 @@ displayName="OmniVault Trinkets Compat"
 authors="jens-hj"
 displayURL="https://modrinth.com/mod/omnivault-trinkets-compat"
 description='''Wear OmniVault backpacks in the Curios or Trinkets back slot: they show on your back, open with the backpack key and keep their upgrades running.'''
-logoFile="assets/omnivault_trinkets_compat/icon.png"
+iconFile="assets/omnivault_trinkets_compat/icon.png"
 [[dependencies.omnivault_trinkets_compat]]
 modId="neoforge"
 type="required"
