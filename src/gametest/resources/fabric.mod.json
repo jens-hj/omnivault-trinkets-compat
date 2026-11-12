@@ -6,7 +6,8 @@
 	"environment": "*",
 	"entrypoints": {
 		"fabric-client-gametest": [
-			"dev.jensh.omnivaulttrinkets.test.BackSlotClientGameTest"
+			"dev.jensh.omnivaulttrinkets.test.BackSlotClientGameTest",
+			"dev.jensh.omnivaulttrinkets.test.GalleryClientGameTest"
 		]
 	},
 	"depends": {
