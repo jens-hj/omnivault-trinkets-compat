@@ -6,6 +6,7 @@ rounded dark tile for the Modrinth project page.
 """
 import sys
 from PIL import Image, ImageDraw
+from compat_symbol import with_compat_symbol
 
 # . empty, o outline, d dark leather, m mid leather, l light leather, s strap, g gold, y highlight
 ART = [
@@ -48,12 +49,12 @@ def pixels():
 
 def main():
     art = pixels()
-    art.resize((128, 128), Image.NEAREST).save(sys.argv[1])
+    with_compat_symbol(art.resize((128, 128), Image.NEAREST)).save(sys.argv[1])
     if len(sys.argv) > 2:
         tile = Image.new("RGBA", (512, 512), (0, 0, 0, 0))
         ImageDraw.Draw(tile).rounded_rectangle((0, 0, 511, 511), radius=96, fill=(28, 24, 44, 255))
         tile.alpha_composite(art.resize((448, 448), Image.NEAREST), (32, 32))
-        tile.save(sys.argv[2])
+        with_compat_symbol(tile).save(sys.argv[2])
 
 
 if __name__ == "__main__":
