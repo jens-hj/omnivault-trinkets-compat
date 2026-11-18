@@ -1,61 +1,26 @@
-"""Draws the mod icon: a backpack with a gold trinket clasp as 16x16 pixel art, scaled up.
-
-Usage: gen_icon.py <out.png> [modrinth_out.png]
-The first output is 128px on a transparent background; the optional second is a 512px
-rounded dark tile for the Modrinth project page.
-"""
-import sys
+"""Original compatibility icon, composed on one absolute pixel grid."""
+from pathlib import Path
 from PIL import Image, ImageDraw
-from compat_symbol import with_compat_symbol
+from compat_symbol import BACKGROUND, draw_compat_symbol
 
-# . empty, o outline, d dark leather, m mid leather, l light leather, s strap, g gold, y highlight
-ART = [
-    "................",
-    ".....oooooo.....",
-    "....oddddddo....",
-    "...ommmmmmmmo...",
-    "..oslmmmmmmlso..",
-    "..osmmmmmmmmso..",
-    "..osddddddddso..",
-    "..osmmmgymmmso..",
-    "..osmmgyygmmso..",
-    "..osmmmggmmmso..",
-    "..osmmmmmmmmso..",
-    "..osdmmmmmmdso..",
-    "..osddmmmmddso..",
-    "..oossssssssoo..",
-    "...oooooooooo...",
-    "................",
-]
-COLORS = {
-    "o": (30, 20, 16, 255),
-    "d": (102, 60, 34, 255),
-    "m": (146, 92, 52, 255),
-    "l": (190, 132, 82, 255),
-    "s": (64, 40, 26, 255),
-    "g": (214, 160, 40, 255),
-    "y": (255, 232, 120, 255),
-}
+root = Path(__file__).resolve().parents[1]
+image = Image.new("RGB", (32,32), BACKGROUND)
+d = ImageDraw.Draw(image)
+# Backpack silhouette; the family links sit beside the lower attachment point.
+d.rectangle((7,3,12,4), fill="#cf9e68")
+d.rectangle((6,4,13,5), fill="#68482f")
+d.rectangle((4,7,16,24), fill="#a96d42")
+d.rectangle((5,5,15,24), fill="#a96d42")
+d.rectangle((5,6,15,11), fill="#c38a56")
+d.rectangle((4,11,16,12), fill="#6c472e")
+d.rectangle((6,15,14,21), fill="#815334")
+d.rectangle((7,15,13,16), fill="#d29a60")
+d.rectangle((9,10,11,13), fill="#ffe39b")
+d.rectangle((3,9,3,22), fill="#664632")
+d.rectangle((17,9,17,20), fill="#664632")
+d.rectangle((5,25,15,25), fill="#664632")
 
-
-def pixels():
-    img = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
-    for y, row in enumerate(ART):
-        for x, c in enumerate(row):
-            if c in COLORS:
-                img.putpixel((x, y), COLORS[c])
-    return img
-
-
-def main():
-    art = pixels()
-    with_compat_symbol(art.resize((128, 128), Image.NEAREST)).save(sys.argv[1])
-    if len(sys.argv) > 2:
-        tile = Image.new("RGBA", (512, 512), (0, 0, 0, 0))
-        ImageDraw.Draw(tile).rounded_rectangle((0, 0, 511, 511), radius=96, fill=(28, 24, 44, 255))
-        tile.alpha_composite(art.resize((448, 448), Image.NEAREST), (32, 32))
-        with_compat_symbol(tile).save(sys.argv[2])
-
-
-if __name__ == "__main__":
-    main()
+draw_compat_symbol(image)
+for path, size in ((root / "common/src/main/resources/assets/omnivault_trinkets_compat/icon.png", 128), (root / "docs/icon.png", 512)):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    image.resize((size,size), Image.Resampling.NEAREST).save(path)
